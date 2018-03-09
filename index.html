@@ -27,8 +27,8 @@
 
          // recursive fractal function.  {xxxxChange} are arrays for [least,most] amount of change.
          function fractal( pos, distance, distChange /* 0-1 */, angle, angleChange /* degrees */, linewidth, lineChange /* thickness */, iterations, count = 0 ) {
-            // generate a vector pointing {angle} degrees from [1,0] origin
-            // (x is right, and y is down in canvasland)
+            // generate a vector that points {angle} degrees from [1,0] origin
+            // (in our coordinate space [x,y] x is right, and y is down)
             let dir = [
                Math.cos( angle/180.0 * Math.PI ) * distance,
                Math.sin( angle/180.0 * Math.PI ) * distance
@@ -37,9 +37,11 @@
                pos[0] + dir[0],
                pos[1] + dir[1]
             ];
+            let newLinewidth = Math.max( 0.5, linewidth - rand(lineChange[0], lineChange[1]) );
+
+            // draw a branch with smoothly changing color and thickness
             const colors=["#FFFFEE","#FFeeaa","#00FFEE","#aa9922","#0066aa","#00aaaa","#FFaaaa","#FF3333"];
             ctx.beginPath();
-            //console.log( count, Math.floor( (colors.length-1) * ((count+1)/(iterations))) );
             let gradient=ctx.createLinearGradient( pos[0], pos[1], newPos[0], newPos[1] );
             gradient.addColorStop("0",    colors[Math.floor( (colors.length-1) * ((count+0)/(iterations+1)) )]);
             gradient.addColorStop("0.5",  colors[Math.floor( (colors.length-1) * ((count+0.5)/(iterations+1)) )]);
@@ -49,9 +51,11 @@
             ctx.moveTo(pos[0], pos[1]);
             ctx.lineTo(newPos[0], newPos[1]);
             ctx.stroke();
+            
+            // call self, to draw two more branches
             if (count < iterations && ((0.2 * count/(iterations-1))) <= rand(0,1)) {
-               fractal( newPos, distance * rand(distChange[0], distChange[1]), distChange, angle + rand(angleChange[0], angleChange[1]), angleChange, Math.max( 0.5, linewidth - rand(lineChange[0], lineChange[1]) ), lineChange, iterations, count + 1 );
-               fractal( newPos, distance * rand(distChange[0], distChange[1]), distChange, angle - rand(angleChange[0], angleChange[1]), angleChange, Math.max( 0.5, linewidth - rand(lineChange[0], lineChange[1]) ), lineChange, iterations, count + 1 );
+               fractal( newPos, distance * rand(distChange[0], distChange[1]), distChange, angle + rand(angleChange[0], angleChange[1]), angleChange, newLinewidth, lineChange, iterations, count + 1 );
+               fractal( newPos, distance * rand(distChange[0], distChange[1]), distChange, angle - rand(angleChange[0], angleChange[1]), angleChange, newLinewidth, lineChange, iterations, count + 1 );
             }
          }
 
