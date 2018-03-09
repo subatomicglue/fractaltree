@@ -7,8 +7,8 @@ Hello you've found a javascript Fractal Tree generator
 [Click Here](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
 
 ## Goals:
- - Simple intro to fractal tree generation
- - Code is simple & easy to read, well documented
+ - Basic intro to fractal tree generation using recursion
+ - Code is simple & easy to read, only a page, well documented
  - Code teaching demo above function :)
  - No dependencies (HTML5/CSS/Javascript ES6)
  - Simple ui
