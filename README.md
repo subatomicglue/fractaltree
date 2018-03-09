@@ -5,10 +5,10 @@ Hello you've found a javascript Fractal Tree generator
 ## Try it out:
 
 Hour Of Code:
- - [ ![super simple javascript fractal tree](screenshot_simple.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index_simple.html)  
+  [ ![super simple javascript fractal tree](screenshot_simple.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index_simple.html)  
 
 More features added later:
- - [ ![javascript fractal tree](screenshot.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
+  [ ![javascript fractal tree](screenshot.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
 
 ## Goals:
  - Basic intro to fractal tree generation using recursion
