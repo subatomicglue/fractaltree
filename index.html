@@ -3,6 +3,7 @@
    </head>
    <body onresize="init()">
       <button class='button' onclick="init()">New Tree!</button>
+      <button class='button2' onclick="tree_type=(tree_type+1)%tree_types; init()">Change Type</button>
       <canvas id='c' width="100%" height="100%" onclick="init()"></canvas>
       <style>
          body { border:0px solid #000000; background:#222244 }
@@ -13,12 +14,13 @@
             width: 100%;
             height: 100%;
          }
-         .button {
-            background-color: green; position:absolute;left:4;top:4; color:#ffffee
-         }
+         .button { background-color: green; position:absolute;left:4;top:4; color:#ffffee }
+         .button2 { background-color: green; position:absolute;left:150;top:4; color:#ffffee }
       </style>
       <script>
          let ctx;
+         let tree_type = 1;
+         let tree_types = 2;
 
          // generate a random number between x1 and x2
          function rand( x1, x2 ) { return Math.random() * (x2-x1) + x1; }
@@ -35,12 +37,13 @@
                pos[0] + dir[0],
                pos[1] + dir[1]
             ];
-            const colors=["#FFFFEE","#FFeeaa","#00FFEE","#aa9922","#0066aa","#00aaaa","#FFaaaa","#FF9999"];
+            const colors=["#FFFFEE","#FFeeaa","#00FFEE","#aa9922","#0066aa","#00aaaa","#FFaaaa","#FF3333"];
             ctx.beginPath();
+            //console.log( count, Math.floor( (colors.length-1) * ((count+1)/(iterations))) );
             let gradient=ctx.createLinearGradient( pos[0], pos[1], newPos[0], newPos[1] );
-            gradient.addColorStop("0",    colors[Math.floor( (colors.length-1) * ((count+0)/(iterations)) )]);
-            gradient.addColorStop("0.5",  colors[Math.floor( (colors.length-1) * ((count+0.5)/(iterations)) )]);
-            gradient.addColorStop("1",    colors[Math.floor( (colors.length-1) * ((count+1)/(iterations)) )]);
+            gradient.addColorStop("0",    colors[Math.floor( (colors.length-1) * ((count+0)/(iterations+1)) )]);
+            gradient.addColorStop("0.5",  colors[Math.floor( (colors.length-1) * ((count+0.5)/(iterations+1)) )]);
+            gradient.addColorStop("1",    colors[Math.floor( (colors.length-1) * ((count+1)/(iterations+1)) )]);
             ctx.strokeStyle=gradient;
             ctx.lineWidth=linewidth;
             ctx.moveTo(pos[0], pos[1]);
@@ -63,8 +66,10 @@
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
             // start the fractal tree
-            //fractal( [c.width/2, c.height-3], c.height/8, [0.65,1.1], -90, [5,65], 5, [0,.8], 6 );      // natural tree
-            fractal( [c.width/2, c.height-3], c.height/4, [0.65,0.88], -90, [25,65], 10, [0,1.8], 13 );  // fractal pattern tree
+            switch (tree_type) {
+               case 0: fractal( [c.width/2, c.height-3], c.height/8, [0.65,1.1], -90, [5,65], 5, [0,.8], 6 ); break;
+               case 1: fractal( [c.width/2, c.height-3], c.height/4, [0.65,0.88], -90, [25,65], 10, [0,1.8], 13 ); break;
+            }
          }
 
          // go!
