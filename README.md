@@ -4,7 +4,7 @@ Hello you've found a javascript Fractal Tree generator
 
 ## Try it out:
 
-[ ![javascript fractal tree](screenshot.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
+[ ![super simple javascript fractal tree](screenshot_simple.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index_simple.html)  [ ![javascript fractal tree](screenshot.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
 
 ## Goals:
  - Basic intro to fractal tree generation using recursion
@@ -22,6 +22,9 @@ cd fractaltree
 ## Run it locally:
 ```
 open index.html (in your favorite web browser)
+
+Super basic learning example:
+   open index_simple.html (in your favorite web browser)
 ```
 
 
