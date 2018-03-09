@@ -8,7 +8,7 @@
       - play with the Change variables, to randomize the fractal.  more random sometimes == more natural
       - try coding in random chance to end recursion early, probably want a low probability e.g. (0.9 <= rand(0,1))
       - try coding in color variation, perhaps an array of colors=['#ffffff','#ff0044','#000000']
-        and pick one based on current iteration:  Math.floor( (colors.length-1) * (count/iteration) )
+        and pick one based on current iteration:  Math.floor( (count/(iteration-1)) * (colors.length-1) )
       - try modifying angleChange to be 0-1 instead (use * instead of the + and -)
       - try adding line-thickness, and control of it!
    -->
