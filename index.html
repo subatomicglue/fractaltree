@@ -1,18 +1,6 @@
 <html>
    <head>
    </head>
-   <!--
-      THINGS TO TRY:
-      - try the other fractal tree (commented out at bottom of init()), see the difference in parameters
-      - play with the iterations (try 13), especially on the 'fractal pattern tree' below
-      - play with the Change variables, to randomize the fractal.  more random sometimes == more natural
-      - try coding in random chance to end recursion early, probably want a low probability e.g. (0.9 <= rand(0,1))
-      - try coding in color variation, perhaps an array of colors=['#ffffff','#ff0044','#000000']
-        and pick one based on current iteration:  Math.floor( (count/(iteration-1)) * (colors.length-1) )
-      - try modifying angleChange to be 0-1 instead of 0-360 (use angle * instead of the + and -)
-      - try adding line-thickness variation, similar to distance/angle
-   -->
-
    <body onresize="init()">
       <button class='button' onclick="init()">New Tree!</button>
       <canvas id='c' width="100%" height="100%" onclick="init()"></canvas>
