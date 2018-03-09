@@ -1,0 +1,81 @@
+<html>
+   <head>
+   </head>
+   <!--
+      THINGS TO TRY:
+      - try the other fractal tree (commented out at bottom of init()), see the difference in parameters
+      - play with the iterations (try 13), especially on the 'fractal pattern tree' below
+      - play with the Change variables, to randomize the fractal.  more random sometimes == more natural
+      - try coding in random chance to end recursion early, probably want a high 0.9 kind of probability (0.9 <= rand(0,1))
+      - try coding in color variation, perhaps an array of colors=['#ffffff','#ff0044','#000000']
+        and pick one based on current iteration:  Math.floor( (colors.length-1) * (count/iteration) )
+      - try modifying angleChange to be 0-1 instead (use * instead of the + and -)
+      - try adding line-thickness, and control of it!
+   -->
+
+   <body onresize="init()">
+      <button class='button' onclick="init()">New Tree!</button>
+      <canvas id='c' width="100%" height="100%" onclick="init()"></canvas>
+      <style>
+         body { border:0px solid #000000; background:#222244 }
+         canvas { border:0px solid #ffffee; background:#333322 }
+         body, canvas {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+         }
+         .button {
+            background-color: green; position:absolute;left:4;top:4; color:#ffffee
+         }
+      </style>
+      <script>
+         let ctx;
+
+         // generate a random number between x1 and x2
+         function rand( x1, x2 ) { return Math.random() * (x2-x1) + x1; }
+
+         // recursive fractal function.  {xxxxChange} are arrays for [least,most] amount of change.
+         function fractal( pos, distance, distChange /* 0-1 */, angle, angleChange /* degrees */, iterations, count = 0 ) {
+            // generate a vector pointing {angle} degrees from [1,0] origin
+            // (x is right, and y is down in canvasland)
+            let dir = [
+               Math.cos( angle/180.0 * Math.PI ) * distance,
+               Math.sin( angle/180.0 * Math.PI ) * distance
+            ];
+            let newPos = [
+               pos[0] + dir[0],
+               pos[1] + dir[1]
+            ];
+            ctx.beginPath();
+            ctx.strokeStyle="#FFFFEE";
+            ctx.moveTo(pos[0], pos[1]);
+            ctx.lineTo(newPos[0], newPos[1]);
+            ctx.stroke();
+            if (count <= iterations) {
+               fractal( newPos, distance * rand(distChange[0], distChange[1]), distChange, angle + rand(angleChange[0], angleChange[1]), angleChange, iterations, count + 1 );
+               fractal( newPos, distance * rand(distChange[0], distChange[1]), distChange, angle - rand(angleChange[0], angleChange[1]), angleChange, iterations, count + 1 );
+            }
+         }
+
+         // initialize
+         function init() {
+            ctx = c.getContext("2d");
+            // fullscreen the canvas
+            if (window.innerWidth != ctx.canvas.width) ctx.canvas.width  = window.innerWidth;
+            if (window.innerHeight != ctx.canvas.height) ctx.canvas.height = window.innerHeight;
+
+            // clear
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            // start the fractal tree
+            fractal( [c.width/2, c.height-3], c.height/8, [0.65,1.1], -90, [5,65], 6 );      // natural tree
+            //fractal( [c.width/2, c.height-3], c.height/4, [0.65,0.88], -90, [35,65], 10 );  // fractal pattern tree
+         }
+
+         // go!
+         init();
+      </script>
+   </body>
+</html>
+
