@@ -5,9 +5,11 @@ Hello you've found a javascript Fractal Tree generator
 ## Try it out:
 
 Hour Of Code (simple):
+
 [ ![super simple javascript fractal tree](screenshot_simple.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index_simple.html)  
 
 More features added later:
+
 [ ![javascript fractal tree](screenshot.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
 
 
@@ -16,9 +18,11 @@ More features added later:
 We can extend the fractal concept with a Lindenmeyer System (L-System).
 
 Fractal L-System (Simple):
+
 [ ![javascript lsystem (simple)](screenshot-lsystem_simple.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem_simple.html)
 
 Fractal L-System:
+
 [ ![javascript lsystem](screenshot-lsystem.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem.html)
 
 
