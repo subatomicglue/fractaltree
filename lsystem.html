@@ -93,9 +93,13 @@ function populateMenu( systems ) {
 
 // call next() on certain keyboard keys
 window.addEventListener("keydown", (e) => {
-  if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowRight") {
+  if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowRight" || e.code === "ArrowDown") {
     e.preventDefault();
     next();
+  }
+  if (e.code === "ArrowLeft" || e.code === "ArrowUp") {
+    e.preventDefault();
+    prev();
   }
 });
 
@@ -339,7 +343,7 @@ function drawStep(){
   animID = requestAnimationFrame(drawStep);
 }
 
-function next(){
+function startAnimation() {
   cancelAnimationFrame(animID);
   ctx.clearRect(0,0,w,h);
   const sys = systems[current];
@@ -349,11 +353,20 @@ function next(){
   ctx.lineWidth = 1;
   step = 0;
   drawStep();
+}
+
+function next() {
   current = (current+1) % systems.length;
+  startAnimation()
+}
+
+function prev() {
+  current = ((current + systems.length) - 1) % systems.length; // add length to avoid modulo with a negative number
+  startAnimation()
 }
 
 populateMenu( systems );
-next();
+startAnimation();
 </script>
 </body>
 </html>
