@@ -12,6 +12,13 @@ More features added later:
 
 [ ![javascript fractal tree](screenshot.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
 
+
+[ ![javascript lsystem (simple)](screenshot-lsystem_simple.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem_simple.html)
+
+
+[ ![javascript lsystem](screenshot-lsystem.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem.html)
+
+
 ## Goals:
  - Basic intro to fractal tree generation using recursion
  - Code is simple & easy to read, only a page, well documented
