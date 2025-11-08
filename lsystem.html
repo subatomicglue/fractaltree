@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>L-System Animated Demo</title>
+<style>
+  body { margin:0; background:#222244; overflow:hidden; }
+  canvas { display:block; width:100vw; height:100vh; background:#333322; }
+  button {
+    position:absolute; top:8px; left:8px;
+    background:green; color:#ffffee; border:none;
+    padding:6px 10px; font-size:14px; cursor:pointer;
+  }
+  #overlay {
+    position:absolute;
+    top:10px; right:20px;
+    color:#fff;
+    font-family:monospace;
+    font-size:20px;
+    opacity:0;
+    transition:opacity 1s ease-in-out;
+    text-shadow: 0 0 8px rgba(0,0,0,0.6);
+    pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- the title -->
+<div id="overlay"></div>
+
+<!-- a nice menu for easy selction -->
+<div id="menu"></div>
+<style>
+  #menu {
+    position: absolute;
+    top: 8px;   /* below overlay title */
+    left: 8px;   /* near top-left corner */
+    max-height: 50vh;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.4);
+    color: #ffffee;
+    font-family: monospace;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+  #menu div {
+    cursor:pointer;
+    margin:2px 0;
+  }
+  #menu div:hover { background: rgba(0,255,0,0.3); }
+</style>
+
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const overlay = document.getElementById("overlay");
+
+let w, h;
+function resize(){ w = canvas.width = innerWidth; h = canvas.height = innerHeight; }
+window.onresize = resize;
+resize();
+
+// sets the title onscreen and highlights the menu item
+function showName(name) {
+  overlay.textContent = name;
+  overlay.style.opacity = 1;
+  clearTimeout(showName.timeout);
+  showName.timeout = setTimeout(() => overlay.style.opacity = 0, 4000);
+
+  // highlight the current menu item
+  const menuItems = document.querySelectorAll("#menu div");
+  menuItems.forEach(item => {
+    if (item.textContent === name) item.style.background = "rgba(0,255,0,0.3)";
+    else item.style.background = "transparent";
+  });
+}
+
+// populates the manu from a list of lsystems
+function populateMenu( systems ) {
+  const menu = document.getElementById("menu");
+  systems.forEach((sys,i)=>{
+    const item = document.createElement("div");
+    item.textContent = sys.name;
+    item.onclick = ()=>{ current=i; next(); };
+    menu.appendChild(item);
+  });
+}
+
+// call next() on certain keyboard keys
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowRight") {
+    e.preventDefault();
+    next();
+  }
+});
+
+const systems = [
+  {
+    name: "Lace",
+    axiom: "F",
+    rules: { "F": "F+F−F−F+F" },
+    angle: 90, iterations: 4, dist: 5,
+    hue_step: 10,
+    dist_step: 0,
+  },
+  {
+    name: "Tree",
+    axiom: "X",
+    rules: { "X": "F+[[X]-X]-F[-FX]+X", "F": "FF" },
+    angle: 25, iterations: 5, dist: 4,
+    hue_step: 10,
+    dist_step: 0,
+  },
+  {
+    name: "Square Pattern",
+    axiom: "F−F−F−F",
+    rules: { "F": "F−F+F+FF−F−F+F" },
+    angle: 90, iterations: 3, dist: 6,
+    hue_step: 10,
+    dist_step: 0,
+  },
+  {
+    name: "Bushy Tree",
+    axiom: "FX",
+    rules: {
+      "X": "F>[+X]<[-X]>FX"
+    },
+    angle: 25,
+    iterations: 6,
+    dist: 40,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Koch snowflake
+  {
+    name: "Koch Snowflake",
+    axiom: "F--F--F",
+    rules: { "F": "F+F--F+F" },
+    angle: 60,
+    iterations: 4,
+    dist: 6,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Dragon curve
+  {
+    name: "Dragon Curve",
+    axiom: "FX",
+    rules: { "X": "X+YF+", "Y": "-FX-Y" },
+    angle: 90,
+    iterations: 12,
+    dist: 5,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Fractal tree (classic)
+  {
+    name: "Fractal Tree",
+    axiom: "X",
+    rules: { "X": "F[+X]F[-X]+X", "F": "FF" },
+    angle: 25,
+    iterations: 6,
+    dist: 6,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Coral growth (with hue fractalization)
+  {
+    name: "Coral",
+    axiom: "X",
+    rules: { "X": "F<[-X]>F>[+X]<FX" },
+    angle: 20,
+    iterations: 7,
+    dist: 5,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Spiral tendril
+  {
+    name: "Spiral Tendril",
+    axiom: "F",
+    rules: { "F": "F+F>F-F<F" },
+    angle: 22,
+    iterations: 7,
+    dist: 5,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Peano curve (grid-like fractal)
+  {
+    name: "Peano Curve",
+    axiom: "X",
+    rules: {
+      "X": "XFYFX+F+YFXFY-F-XFYFX",
+      "Y": "YFXFY-F-XFYFX+F+YFXFY"
+    },
+    angle: 90,
+    iterations: 3,
+    dist: 5,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Triangle crystal (snowflake variant)
+  {
+    name: "Triangle Crystal",
+    axiom: "F++F++F",
+    rules: { "F": "F-F++F-F" },
+    angle: 60,
+    iterations: 5,
+    dist: 6,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Fractal bush with color change
+  {
+    name: "Fractal Bush",
+    axiom: "X",
+    rules: { "X": "F[+X]<F[-X]>+X", "F": "FF" },
+    angle: 22.5,
+    iterations: 6,
+    dist: 4,
+    hue_step: 10,
+    dist_step: 0,
+  },
+
+  // Lightning bolt (chaotic)
+  {
+    name: "Lightning Bolt",
+    axiom: "X",
+    rules: { "X": "F+X[-X]<F>X", "F": "F[+F]F[-F]F" },
+    angle: 18,
+    iterations: 5,
+    dist: 5,
+    hue_step: 40,
+    dist_step: 0,
+  },
+
+  // Color helix (hue rotating spiral)
+  {
+    name: "Color Helix",
+    axiom: "F",
+    rules: { "F": "F>^+F>+F>+F" },
+    angle: 89,
+    iterations: 6,
+    dist: 10,
+    hue_step: 10,
+    dist_step: 10,
+  },
+
+  // Color helix (hue rotating spiral)
+  {
+    name: "Color Spirograph",
+    axiom: "F",
+    rules: { "F": "F>^+F>^+F>^+F" },
+    angle: 137.5,          // golden angle creates smooth spiral
+    iterations: 7,
+    dist: 6,
+    hue_step: 8,
+    dist_step: 1,  // each ^ increases distance by 1 pixel
+  },
+
+];
+
+let current = 0, path = [], step = 0, animID;
+
+// generate the L-system string
+function generate(sys){
+  let str = sys.axiom;
+  for (let i=0;i<sys.iterations;i++) {
+    let next="";
+    for (const ch of str) next += sys.rules[ch] || ch;
+    str = next;
+  }
+  return str;
+}
+
+// convert string into 2D geometry + color data
+function preparePath(str, angle, dist, hueStep, distStep) {
+  const stack = [];
+  let a = -90;
+  let x = w/2, y = h;
+  let hue = 60; // start color
+  const cmds = [];
+
+  for (const ch of str) {
+    if (ch === "F") {
+      const x2 = x + Math.cos(a*Math.PI/180)*dist;
+      const y2 = y + Math.sin(a*Math.PI/180)*dist;
+      cmds.push({x1:x, y1:y, x2, y2, color:`hsl(${hue},100%,70%)`});
+      x = x2; y = y2;
+    }
+    else if (ch === "+") a += angle;
+    else if (ch === "−" || ch === "-") a -= angle;
+    else if (ch === ">") hue += hueStep;
+    else if (ch === "<") hue -= hueStep;
+    else if (ch === "^") dist += distStep;   // expand
+    else if (ch === "v") dist = Math.max(0, dist - distStep); // contract
+    else if (ch === "[") stack.push([x,y,a,hue]);
+    else if (ch === "]") [x,y,a,hue] = stack.pop();
+  }
+
+  // If no explicit color commands, assign gradient by sequence
+  const hasColorCommands = /[<>]/.test(str);  // detect if system uses color
+  if (!hasColorCommands) {
+    for (let i = 0; i < cmds.length; i++) {
+      const t = i / cmds.length;
+      const hue = 60 + 240 * t;  // yellow → blue
+      cmds[i].color = `hsl(${hue},100%,70%)`;
+    }
+  }
+
+  return cmds;
+}
+
+
+// draw each step with its precomputed color
+function drawStep(){
+  if (step >= path.length){ cancelAnimationFrame(animID); return; }
+  const p = path[step];
+  ctx.strokeStyle = p.color;
+  ctx.beginPath();
+  ctx.moveTo(p.x1, p.y1);
+  ctx.lineTo(p.x2, p.y2);
+  ctx.stroke();
+  step++;
+  animID = requestAnimationFrame(drawStep);
+}
+
+function next(){
+  cancelAnimationFrame(animID);
+  ctx.clearRect(0,0,w,h);
+  const sys = systems[current];
+  showName(sys.name);
+  const str = generate(sys);
+  path = preparePath(str, sys.angle, sys.dist, sys.hue_step, sys.dist_step);
+  ctx.lineWidth = 1;
+  step = 0;
+  drawStep();
+  current = (current+1) % systems.length;
+}
+
+populateMenu( systems );
+next();
+</script>
+</body>
+</html>
+
