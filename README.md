@@ -13,18 +13,6 @@ More features added later:
 [ ![javascript fractal tree](screenshot.jpg) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/index.html)
 
 
-## l-systems
-We can extend the fractal concept with a Lindenmeyer System (L-System).
-
-Simple Fractal L-System (Demo):
-
-[ ![javascript lsystem (simple)](screenshot-lsystem_simple.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem_simple.html)
-
-Fractal L-System (Demo):
-
-[ ![javascript lsystem](screenshot-lsystem.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem.html)
-
-
 ## Goals:
  - Basic intro to fractal tree generation using recursion
  - Code is simple & easy to read, only a page, well documented
@@ -45,6 +33,21 @@ open index.html (in your favorite web browser)
 Super basic learning example (hour of code):
    open index_simple.html (in your favorite web browser)
 ```
+
+## Advanced:  Taking it a step further, enabling creative design...   With l-systems
+We can extend the fractal concept with a Lindenmeyer System (L-System).
+This allows an artist to create fractal designs.
+
+Simple Fractal L-System (Demo):
+
+[ ![javascript lsystem (simple)](screenshot-lsystem_simple.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem_simple.html)
+
+Fractal L-System (Demo):
+
+[ ![javascript lsystem](screenshot-lsystem.png) ](http://htmlpreview.github.io/?https://raw.githubusercontent.com/subatomicglue/fractaltree/master/lsystem.html)
+
+These systems are easily modified, so you can add any custom command that you dream of (e.g. set color, memory slots, etc).
+
 
 
 ## HelloWorld Demos

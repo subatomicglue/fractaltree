@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html>  
 <head>
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover">
 <meta charset="utf-8">
 <title>L-System Animated Demo</title>
 <style>
   body { margin:0; background:#222244; overflow:hidden; }
-  canvas { display:block; width:100vw; height:100vh; background:#333322; }
+  html body { width: 100%; height: 100dvh; }
+  canvas { display:block; width:100%; height:100%; background:#333322; }
   button {
     position:absolute; top:8px; left:8px;
     background:green; color:#ffffee; border:none;
     padding:6px 10px; font-size:14px; cursor:pointer;
   }
-  #overlay {
+  #overlay_title {
     position:absolute;
     top:10px; right:20px;
     color:#fff;
@@ -28,37 +30,369 @@
 <canvas id="c"></canvas>
 
 <!-- the title -->
-<div id="overlay"></div>
+<div id="overlay_title"></div>
 
-<!-- a nice menu for easy selction -->
-<div id="menu"></div>
-<style>
-  #menu {
-    position: absolute;
-    top: 8px;   /* below overlay title */
-    left: 8px;   /* near top-left corner */
-    max-height: 50vh;
-    overflow-y: auto;
-    background: rgba(0,0,0,0.4);
-    color: #ffffee;
-    font-family: monospace;
-    font-size: 14px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+ <!-- Menus (see below HTML Components which define them) -->
+<div id="controls" style="position: absolute; top: 8px; left: 8px;">
+  <l-system-menu style="display: block;  top:8px; left:8px; margin-bottom: 8px;"></l-system-menu>
+  <l-system-editor style="display: block;  top:8rem; left:8px; margin-bottom: 8px;"></l-system-editor>
+</div>
+<script>
+////////////////////////////////////////////////////////////////////////////////
+// HTML Component:  Reusable Roll up control
+class RollUpBox extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({mode:'open'});
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          font-family: monospace;
+          color: #ffffee;
+          z-index: 100;
+        }
+        .title {
+          background: rgba(0,0,0,0.6);
+          padding: 6px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          user-select: none;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .arrow {
+          transition: transform 0.2s ease;
+        }
+        .arrow.open {
+          transform: rotate(90deg);
+        }
+        .content {
+          background: rgba(0,0,0,0.5);
+          border-radius: 4px;
+          padding: 8px;
+          margin-top: 4px;
+          display: none;
+        }
+        :host(.open) .content {
+          display: block;
+        }
+      </style>
+      <div class="title"><span class="arrow">▶</span><slot name="title"></slot></div>
+      <div class="content"><slot></slot></div>
+    `;
   }
-  #menu div {
-    cursor:pointer;
-    margin:2px 0;
+
+  connectedCallback() {
+    const title = this.shadowRoot.querySelector('.title');
+    const arrow = this.shadowRoot.querySelector('.arrow');
+    title.addEventListener('click', () => {
+      this.classList.toggle('open');
+      arrow.classList.toggle('open');
+    });
   }
-  #menu div:hover { background: rgba(0,255,0,0.3); }
-</style>
+}
+customElements.define('roll-up-box', RollUpBox);
+
+////////////////////////////////////////////////////////////////////////////////
+// HTML Component:  Editor
+// e.g.
+// <div id="controls" style="position: absolute; top: 8px; left: 8px;">
+//   <l-system-editor style="display: block;  top:8rem; left:8px; margin-bottom: 8px;"></l-system-editor>
+// </div>
+class LSystemEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({mode:'open'});
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host { font-family: monospace; font-size: 13px; z-index:100; }
+        .editor { 
+          background: rgba(0,0,0,0.5); 
+          color:#ffffee; 
+          padding:8px; 
+          border-radius:4px; 
+          max-width:300px; 
+          box-shadow:0 0 10px rgba(0,0,0,0.5);
+        }
+        .editor label { display:block; margin-bottom:8px; }
+        input, textarea { 
+          background:#222; 
+          color:#eee; 
+          border:1px solid #555; 
+          padding:2px 4px; 
+          width:100%; 
+          box-sizing:border-box; 
+          font-family: monospace;
+        }
+        input.invalid, textarea.invalid { border-color:red; }
+        .error-text { color:red; font-size:12px; display:none; margin-left:4px; }
+
+        /* Custom spinner buttons */
+        .number-wrapper {
+          display:flex;
+          align-items:center;
+        }
+        .number-wrapper input {
+          flex:1;
+          margin-right:4px;
+        }
+        .spinner-btn {
+          width:24px;
+          height:24px;
+          line-height:22px;
+          text-align:center;
+          cursor:pointer;
+          user-select:none;
+          background: #444;
+          color: #eee;
+          border-radius:2px;
+          font-weight:bold;
+        }
+        .spinner-btn:hover {
+          background:#666;
+        }
+      </style>
+      <roll-up-box>
+        <span slot="title">L-System Editor</span>
+        <div class="editor"></div>
+      </roll-up-box>
+    `;
+    this.editorDiv = this.shadowRoot.querySelector('.editor');
+    this.inputs = {};
+    this.onEditCallback = null;
+    this.paramHints = {};
+    this.onInputChange = this.onInputChange.bind(this);
+  }
+
+  setParameterHints(hints) {
+    this.paramHints = hints;
+  }
+
+  makeAutoRepeatButton(btn, input, delta) {
+    let timer;
+
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+
+    const step = () => {
+      input.value = parseFloat(input.value) + delta;
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+    };
+
+    const start = (e) => {
+      e.preventDefault(); // prevent text selection / context menu
+      step(); // immediate first step
+      timer = setInterval(step, 100);
+      document.addEventListener('pointerup', stop);
+      document.addEventListener('pointercancel', stop);
+    };
+
+    const stop = () => {
+      clearInterval(timer);
+      document.removeEventListener('pointerup', stop);
+      document.removeEventListener('pointercancel', stop);
+    };
+
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('contextmenu', e => e.preventDefault()); // prevent menu
+  }
+
+  loadCurrent(sys) {
+    this.sys = sys;
+    this.editorDiv.innerHTML = '';
+    this.inputs = {};
+
+    for (const key of Object.keys(sys)) {
+      const val = sys[key];
+      const hint = this.paramHints[key] || {};
+      const label = document.createElement('label');
+      label.textContent = hint.title || key;
+
+      let input;
+      let errorSpan;
+      const type = hint.type || typeof val;
+
+      if (type === 'number' || type === 'int' || type === 'float') {
+        // Wrap input with spinner buttons
+        const wrapper = document.createElement('div');
+        wrapper.className = 'number-wrapper';
+
+        input = document.createElement('input');
+        input.type = 'number';
+        input.step = hint.step ?? (type==='int'?1:0.1);
+        input.value = val;
+
+        const btnDown = document.createElement('div');
+        btnDown.className = 'spinner-btn';
+        btnDown.textContent = '−';
+        const btnUp = document.createElement('div');
+        btnUp.className = 'spinner-btn';
+        btnUp.textContent = '+';
+        const stepValue = parseFloat(input.step || "1") || 1;
+        this.makeAutoRepeatButton(btnUp, input, stepValue);
+        this.makeAutoRepeatButton(btnDown, input, -stepValue);
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(btnDown);
+        wrapper.appendChild(btnUp);
+        label.appendChild(wrapper);
+      } else if (type === 'boolean') {
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = val;
+        label.appendChild(input);
+      } else if (type==='json' || type==='object') {
+        input = document.createElement('textarea');
+        input.rows = 4;
+        input.value = JSON.stringify(val, null, 2);
+        errorSpan = document.createElement('span');
+        errorSpan.className = 'error-text';
+        errorSpan.textContent = '(error)';
+        label.appendChild(errorSpan);
+        input.errorSpan = errorSpan;
+        label.appendChild(input);
+      } else { // string
+        input = document.createElement('input');
+        input.type = 'text';
+        input.value = val;
+        label.appendChild(input);
+      }
+
+      input.dataset.key = key;
+      input.addEventListener('input', this.onInputChange);
+
+      this.editorDiv.appendChild(label);
+      this.inputs[key] = input;
+    }
+
+    // Stop propagation for all inputs
+    Object.values(this.inputs).forEach(input => {
+      ['keydown','keyup','input'].forEach(ev => 
+        input.addEventListener(ev, e => e.stopPropagation())
+      );
+    });
+  }
+
+  onEdit(callback) { this.onEditCallback = callback; }
+
+  onInputChange(e) {
+    const key = e.target.dataset.key;
+    if (!key || !this.sys) return;
+
+    const sys = this.sys;
+    const hint = this.paramHints[key] || {};
+    let valid = true;
+
+    try {
+      const type = hint.type || typeof sys[key];
+      if (type==='number' || type==='float') sys[key] = parseFloat(e.target.value);
+      else if (type==='int') sys[key] = parseInt(e.target.value);
+      else if (type==='boolean') sys[key] = e.target.checked;
+      else if (type==='json' || type==='object') sys[key] = JSON.parse(e.target.value);
+      else sys[key] = e.target.value;
+
+      e.target.classList.remove('invalid');
+      if (e.target.errorSpan) e.target.errorSpan.style.display = 'none';
+    } catch {
+      valid = false;
+      e.target.classList.add('invalid');
+      if (e.target.errorSpan) e.target.errorSpan.style.display = 'inline';
+    }
+
+    if (valid && this.onEditCallback) this.onEditCallback(sys);
+  }
+}
+customElements.define('l-system-editor', LSystemEditor);
+
+
+////////////////////////////////////////////////////////////////////////////////
+// HTML Component:  Selector Menu
+// e.g.
+// <div id="controls" style="position: absolute; top: 8px; left: 8px;">
+//   <l-system-menu style="display: block;  top:8px; left:8px; margin-bottom: 8px;"></l-system-menu>
+// </div>
+class LSystemMenu extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({mode:'open'});
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          font-family: monospace;
+          font-size: 14px;
+          color: #ffffee;
+        }
+        .menu {
+          max-height: 50vh;
+          overflow-y: auto;
+          background: rgba(0,0,0,0.4);
+          color: #ffffee;
+          padding: 4px 8px;
+          border-radius: 4px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .menu div {
+          cursor: pointer;
+          margin: 2px 0;
+        }
+        .menu div:hover {
+          background: rgba(0,255,0,0.3);
+        }
+      </style>
+      <roll-up-box>
+        <span slot="title">L-System Menu</span>
+        <div class="menu"></div>
+      </roll-up-box>
+    `;
+  }
+
+  connectedCallback() {
+    this.menuDiv = this.shadowRoot.querySelector('.menu');
+    if (this.systems) this.populate(this.systems);
+  }
+
+  populate(systems) {
+    this.menuDiv.innerHTML = '';
+    this.systems = systems;
+    systems.forEach((sys, i) => {
+      const item = document.createElement('div');
+      item.textContent = sys.name;
+      item.addEventListener('click', () => {
+        if (this.onSelect) this.onSelect(i);
+      });
+      this.menuDiv.appendChild(item);
+    });
+    if (this.currentIndex != null) this.highlight(this.currentIndex);
+  }
+
+  onSelectCallback(callback) {
+    this.onSelect = callback;
+  }
+
+  highlight(index) {
+    this.currentIndex = index;
+    const children = Array.from(this.menuDiv.children);
+    children.forEach((child,i)=>{
+      child.style.background = (i === index) ? "rgba(0,255,0,0.3)" : "transparent";
+    });
+  }
+
+  setCurrentName( name ) {
+    Array.from(this.menuDiv.children)[this.currentIndex].textContent = name;
+  }
+}
+customElements.define('l-system-menu', LSystemMenu);
+</script>
+
+
+
 
 
 <script>
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
-const overlay = document.getElementById("overlay");
+const overlay_title = document.getElementById("overlay_title");
 
 let w, h;
 function resize(){ w = canvas.width = innerWidth; h = canvas.height = innerHeight; }
@@ -67,41 +401,33 @@ resize();
 
 // sets the title onscreen and highlights the menu item
 function showName(name) {
-  overlay.textContent = name;
-  overlay.style.opacity = 1;
+  overlay_title.textContent = name;
+  overlay_title.style.opacity = 1;
   clearTimeout(showName.timeout);
-  showName.timeout = setTimeout(() => overlay.style.opacity = 0, 4000);
+  showName.timeout = setTimeout(() => overlay_title.style.opacity = 0, 4000);
 
   // highlight the current menu item
-  const menuItems = document.querySelectorAll("#menu div");
-  menuItems.forEach(item => {
-    if (item.textContent === name) item.style.background = "rgba(0,255,0,0.3)";
-    else item.style.background = "transparent";
-  });
-}
-
-// populates the manu from a list of lsystems
-function populateMenu( systems ) {
-  const menu = document.getElementById("menu");
-  systems.forEach((sys,i)=>{
-    const item = document.createElement("div");
-    item.textContent = sys.name;
-    item.onclick = ()=>{ current=i; next(); };
-    menu.appendChild(item);
-  });
+  const menuComponent = document.querySelector('l-system-menu');
+  const index = systems.findIndex(sys => sys.name === name);
+  if (menuComponent && index >= 0) menuComponent.highlight(index);
 }
 
 // call next() on certain keyboard keys
-window.addEventListener("keydown", (e) => {
-  if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowRight" || e.code === "ArrowDown") {
+document.body.addEventListener("keydown", (e) => {
+  if (["Space","Enter","ArrowRight","ArrowDown"].includes(e.code)) {
     e.preventDefault();
     next();
   }
-  if (e.code === "ArrowLeft" || e.code === "ArrowUp") {
+  if (["ArrowLeft","ArrowUp"].includes(e.code)) {
     e.preventDefault();
     prev();
   }
 });
+
+
+let current = 0, path = [], step = 0, animID;
+const menu = document.querySelector('l-system-menu');
+const editor = document.querySelector('l-system-editor');
 
 const systems = [
   {
@@ -148,6 +474,17 @@ const systems = [
     rules: { "F": "F+F--F+F" },
     angle: 60,
     iterations: 4,
+    dist: 6,
+    hue_step: 10,
+    dist_step: 0,
+  },
+  // Triangle crystal (snowflake variant)
+  {
+    name: "Triangle Crystal",
+    axiom: "F++F++F",
+    rules: { "F": "F-F++F-F" },
+    angle: 60,
+    iterations: 5,
     dist: 6,
     hue_step: 10,
     dist_step: 0,
@@ -216,18 +553,6 @@ const systems = [
     dist_step: 0,
   },
 
-  // Triangle crystal (snowflake variant)
-  {
-    name: "Triangle Crystal",
-    axiom: "F++F++F",
-    rules: { "F": "F-F++F-F" },
-    angle: 60,
-    iterations: 5,
-    dist: 6,
-    hue_step: 10,
-    dist_step: 0,
-  },
-
   // Fractal bush with color change
   {
     name: "Fractal Bush",
@@ -278,8 +603,6 @@ const systems = [
 
 ];
 
-let current = 0, path = [], step = 0, animID;
-
 // generate the L-system string
 function generate(sys){
   let str = sys.axiom;
@@ -312,8 +635,8 @@ function preparePath(str, angle, dist, hueStep, distStep) {
     else if (ch === "<") hue -= hueStep;
     else if (ch === "^") dist += distStep;   // expand
     else if (ch === "v") dist = Math.max(0, dist - distStep); // contract
-    else if (ch === "[") stack.push([x,y,a,hue]);
-    else if (ch === "]") [x,y,a,hue] = stack.pop();
+    else if (ch === "[") stack.push([x,y,a,hue, dist]);
+    else if (ch === "]") [x,y,a,hue,dist] = stack.pop();
   }
 
   // If no explicit color commands, assign gradient by sequence
@@ -355,19 +678,54 @@ function startAnimation() {
   drawStep();
 }
 
+// go to next in the l-system selector menu
 function next() {
   current = (current+1) % systems.length;
+  editor.loadCurrent(systems[current]);
   startAnimation()
 }
 
+// go to prev in the l-system selector menu
 function prev() {
   current = ((current + systems.length) - 1) % systems.length; // add length to avoid modulo with a negative number
+  editor.loadCurrent(systems[current]);
   startAnimation()
 }
 
-populateMenu( systems );
+// tapped on the l-system selector menu
+menu.onSelectCallback((i) => { 
+  current = i;
+  editor.loadCurrent(systems[current]);
+  startAnimation();
+});
+
+// editor hints 
+editor.setParameterHints({
+  axiom:       { title:"Axiom", type:"string" },
+  angle:       { title:"Angle", type:"float", step:1 },
+  dist:        { title:"Distance", type:"float", step:0.5 },
+  iterations:  { title:"Replace Iterations (Careful!)", type:"int", step:1 },
+  hue_step:    { title:"Hue Step", type:"float", step:1 },
+  dist_step:   { title:"Distance Step", type:"float", step:0.1 },
+  rules:       { title:"Replace Rules", type:"json" }
+});
+
+// anytime a field is edited by the editor...
+editor.onEdit((sys) => {
+  menu.setCurrentName( sys.name ); // reflect the l-system name back to the menu
+  startAnimation();
+});
+
+
+// init
+menu.populate(systems);
+editor.loadCurrent(systems[current]);
 startAnimation();
+
 </script>
 </body>
 </html>
+
+
+
 
