@@ -97,7 +97,7 @@ class RollUpBox extends HTMLElement {
       this.classList.toggle('open');
       arrow.classList.toggle('open');
     });
-    this->updateOpenState();
+    this.updateOpenState();
   }
   updateOpenState() {
     const content = this.shadowRoot.querySelector('.content');
