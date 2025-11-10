@@ -43,73 +43,34 @@
 class RollUpBox extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({mode:'open'});
+    this.attachShadow({ mode: 'open' });
     this.shadowRoot.innerHTML = `
       <style>
-        :host {
-          font-family: monospace;
-          color: #ffffee;
-          z-index: 100;
-        }
-        .title {
-          background: rgba(0,0,0,0.6);
-          padding: 6px 10px;
-          border-radius: 4px;
-          cursor: pointer;
-          user-select: none;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .arrow {
-          transition: transform 0.2s ease;
-        }
-        .arrow.open {
-          transform: rotate(90deg);
-        }
-        .content {
-          background: rgba(0,0,0,0.5);
-          border-radius: 4px;
-          padding: 8px;
-          margin-top: 4px;
-          display: none;
-        }
-        :host(.open) .content {
-          display: block;
-        }
+        :host { display: block; font-family: monospace; color: #ffffee; }
+        .header { cursor: pointer; background: rgba(0,0,0,0.6); padding: 6px 10px; border-radius: 4px; user-select: none; }
+        .content { display: none; background: rgba(0,0,0,0.5); border-radius: 4px; padding: 8px; margin-top: 4px; }
+        .open .content { display: block; }
       </style>
-      <div class="title"><span class="arrow">▶</span><slot name="title"></slot></div>
+      <div class="header"><slot name="title"></slot></div>
       <div class="content"><slot></slot></div>
     `;
   }
-  
-  static get observedAttributes() { return ['open']; }
 
   connectedCallback() {
-    const title = this.shadowRoot.querySelector('.title');
-    const arrow = this.shadowRoot.querySelector('.arrow');
+    this.header = this.shadowRoot.querySelector('.header');
+    this.header.addEventListener('click', () => this.toggle());
 
-    title.addEventListener('click', () => {
-      this.toggleAttribute('open');
-    });
-
-    // initialize
-    this.updateOpenState();
-  }
-
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (name === 'open') this.updateOpenState();
-  }
-
-  updateOpenState() {
-    const arrow = this.shadowRoot.querySelector('.arrow');
-    if (this.hasAttribute('open')) {
-      arrow.classList.add('open');
-    } else {
-      arrow.classList.remove('open');
+    // ✅ automatically open if parent element has the "open" attribute
+    if (this.closest('[open]')) {
+      this.classList.add('open');
     }
   }
+
+  toggle() {
+    this.classList.toggle('open');
+  }
 }
+
 customElements.define('roll-up-box', RollUpBox);
 
 ////////////////////////////////////////////////////////////////////////////////
