@@ -97,6 +97,12 @@ class RollUpBox extends HTMLElement {
       this.classList.toggle('open');
       arrow.classList.toggle('open');
     });
+    this->updateOpenState();
+  }
+  updateOpenState() {
+    const content = this.shadowRoot.querySelector('.content');
+    const isOpen = this.hasAttribute('open');
+    content.style.display = isOpen ? 'block' : 'none';
   }
 }
 customElements.define('roll-up-box', RollUpBox);
