@@ -34,7 +34,7 @@
 
  <!-- Menus (see below HTML Components which define them) -->
 <div id="controls" style="position: absolute; top: 8px; left: 8px;">
-  <l-system-menu style="display: block;  top:8px; left:8px; margin-bottom: 8px;"></l-system-menu>
+  <l-system-menu open style="display: block;  top:8px; left:8px; margin-bottom: 8px;"></l-system-menu>
   <l-system-editor style="display: block;  top:8rem; left:8px; margin-bottom: 8px;"></l-system-editor>
 </div>
 <script>
@@ -82,10 +82,17 @@ class RollUpBox extends HTMLElement {
       <div class="content"><slot></slot></div>
     `;
   }
-
+  
   connectedCallback() {
     const title = this.shadowRoot.querySelector('.title');
     const arrow = this.shadowRoot.querySelector('.arrow');
+  
+    // If <roll-up-box open> is present, open by default
+    if (this.hasAttribute('open')) {
+      this.classList.add('open');
+      arrow.classList.add('open');
+    }
+  
     title.addEventListener('click', () => {
       this.classList.toggle('open');
       arrow.classList.toggle('open');
