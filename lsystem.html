@@ -183,30 +183,37 @@ class LSystemEditor extends HTMLElement {
 
   makeAutoRepeatButton(btn, input, delta) {
     let timer;
-
+  
     btn.addEventListener('contextmenu', e => e.preventDefault());
-
+  
     const step = () => {
+      // Remember current focus
+      const active = document.activeElement;
+      const wasFocused = (active === input);
+  
+      // Update value programmatically
       input.value = parseFloat(input.value) + delta;
-      input.dispatchEvent(new Event('input', {bubbles:true}));
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+  
+      // Restore focus if input was not focused (prevents iOS zoom)
+      if (!wasFocused) input.blur();
     };
-
+  
     const start = (e) => {
-      e.preventDefault(); // prevent text selection / context menu
+      e.preventDefault(); // prevent text selection / context menu / focus
       step(); // immediate first step
       timer = setInterval(step, 100);
       document.addEventListener('pointerup', stop);
       document.addEventListener('pointercancel', stop);
     };
-
+  
     const stop = () => {
       clearInterval(timer);
       document.removeEventListener('pointerup', stop);
       document.removeEventListener('pointercancel', stop);
     };
-
+  
     btn.addEventListener('pointerdown', start);
-    btn.addEventListener('contextmenu', e => e.preventDefault()); // prevent menu
   }
 
   loadCurrent(sys) {
