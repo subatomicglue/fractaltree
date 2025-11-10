@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>  
 <head>
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta charset="utf-8">
 <title>L-System Animated Demo</title>
 <style>
@@ -43,34 +43,62 @@
 class RollUpBox extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({mode:'open'});
     this.shadowRoot.innerHTML = `
       <style>
-        :host { display: block; font-family: monospace; color: #ffffee; }
-        .header { cursor: pointer; background: rgba(0,0,0,0.6); padding: 6px 10px; border-radius: 4px; user-select: none; }
-        .content { display: none; background: rgba(0,0,0,0.5); border-radius: 4px; padding: 8px; margin-top: 4px; }
-        .open .content { display: block; }
+        :host {
+          font-family: monospace;
+          color: #ffffee;
+          z-index: 100;
+        }
+        .title {
+          background: rgba(0,0,0,0.6);
+          padding: 6px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          user-select: none;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .arrow {
+          transition: transform 0.2s ease;
+        }
+        .arrow.open {
+          transform: rotate(90deg);
+        }
+        .content {
+          background: rgba(0,0,0,0.5);
+          border-radius: 4px;
+          padding: 8px;
+          margin-top: 4px;
+          display: none;
+        }
+        :host(.open) .content {
+          display: block;
+        }
       </style>
-      <div class="header"><slot name="title"></slot></div>
+      <div class="title"><span class="arrow">▶</span><slot name="title"></slot></div>
       <div class="content"><slot></slot></div>
     `;
   }
-
+  
   connectedCallback() {
-    this.header = this.shadowRoot.querySelector('.header');
-    this.header.addEventListener('click', () => this.toggle());
-
-    // ✅ automatically open if parent element has the "open" attribute
-    if (this.closest('[open]')) {
+    const title = this.shadowRoot.querySelector('.title');
+    const arrow = this.shadowRoot.querySelector('.arrow');
+  
+    // If <roll-up-box open> is present, open by default
+    if (this.hasAttribute('open')) {
       this.classList.add('open');
+      arrow.classList.add('open');
     }
-  }
-
-  toggle() {
-    this.classList.toggle('open');
+  
+    title.addEventListener('click', () => {
+      this.classList.toggle('open');
+      arrow.classList.toggle('open');
+    });
   }
 }
-
 customElements.define('roll-up-box', RollUpBox);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,6 +134,9 @@ class LSystemEditor extends HTMLElement {
         }
         input.invalid, textarea.invalid { border-color:red; }
         .error-text { color:red; font-size:12px; display:none; margin-left:4px; }
+        input[type=number] {
+          font-size: 16px; /* iOS Safari disables zoom if font ≥ 16px */
+        }
 
         /* Custom spinner buttons */
         .number-wrapper {
@@ -131,9 +162,6 @@ class LSystemEditor extends HTMLElement {
         .spinner-btn:hover {
           background:#666;
         }
-        input[type=number] {
-          font-size: 16px; /* iOS Safari disables zoom if font ≥ 16px */
-        }
       </style>
       <roll-up-box>
         <span slot="title">L-System Editor</span>
@@ -146,11 +174,6 @@ class LSystemEditor extends HTMLElement {
     this.paramHints = {};
     this.onInputChange = this.onInputChange.bind(this);
   }
-  
-  connectedCallback() {
-    const rollup = this.shadowRoot.querySelector('roll-up-box');
-    if (this.hasAttribute('open')) rollup.setAttribute('open', '');
-  }
 
   setParameterHints(hints) {
     this.paramHints = hints;
@@ -158,37 +181,30 @@ class LSystemEditor extends HTMLElement {
 
   makeAutoRepeatButton(btn, input, delta) {
     let timer;
-  
+
     btn.addEventListener('contextmenu', e => e.preventDefault());
-  
+
     const step = () => {
-      // Remember current focus
-      const active = document.activeElement;
-      const wasFocused = (active === input);
-  
-      // Update value programmatically
       input.value = parseFloat(input.value) + delta;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-  
-      // Restore focus if input was not focused (prevents iOS zoom)
-      if (!wasFocused) input.blur();
+      input.dispatchEvent(new Event('input', {bubbles:true}));
     };
-  
+
     const start = (e) => {
-      e.preventDefault(); // prevent text selection / context menu / focus
+      e.preventDefault(); // prevent text selection / context menu
       step(); // immediate first step
       timer = setInterval(step, 100);
       document.addEventListener('pointerup', stop);
       document.addEventListener('pointercancel', stop);
     };
-  
+
     const stop = () => {
       clearInterval(timer);
       document.removeEventListener('pointerup', stop);
       document.removeEventListener('pointercancel', stop);
     };
-  
+
     btn.addEventListener('pointerdown', start);
+    btn.addEventListener('contextmenu', e => e.preventDefault()); // prevent menu
   }
 
   loadCurrent(sys) {
@@ -342,9 +358,6 @@ class LSystemMenu extends HTMLElement {
   }
 
   connectedCallback() {
-    const rollup = this.shadowRoot.querySelector('roll-up-box');
-    if (this.hasAttribute('open')) rollup.setAttribute('open', '');
-  
     this.menuDiv = this.shadowRoot.querySelector('.menu');
     if (this.systems) this.populate(this.systems);
   }
@@ -722,7 +735,6 @@ startAnimation();
 </script>
 </body>
 </html>
-
 
 
 
