@@ -34,7 +34,7 @@
 
  <!-- Menus (see below HTML Components which define them) -->
 <div id="controls" style="position: absolute; top: 8px; left: 8px;">
-  <l-system-menu open style="display: block;  top:8px; left:8px; margin-bottom: 8px;"></l-system-menu>
+  <l-system-menu style="display: block;  top:8px; left:8px; margin-bottom: 8px;" open></l-system-menu>
   <l-system-editor style="display: block;  top:8rem; left:8px; margin-bottom: 8px;"></l-system-editor>
 </div>
 <script>
@@ -86,18 +86,36 @@ class RollUpBox extends HTMLElement {
   connectedCallback() {
     const title = this.shadowRoot.querySelector('.title');
     const arrow = this.shadowRoot.querySelector('.arrow');
-  
-    // If <roll-up-box open> is present, open by default
-    if (this.hasAttribute('open')) {
+
+    // Works whether roll-up-box is in the light DOM or a Shadow DOM
+    const host = this.getRootNode().host;  // <- key change
+
+    const shouldOpen =
+      this.hasAttribute('open') ||
+      (host && host.hasAttribute && host.hasAttribute('open'));
+
+    if (shouldOpen) {
       this.classList.add('open');
       arrow.classList.add('open');
     }
-  
+
     title.addEventListener('click', () => {
       this.classList.toggle('open');
       arrow.classList.toggle('open');
     });
   }
+
+
+  static get observedAttributes() { return ['open']; }
+  attributeChangedCallback(name, oldVal, newVal) {
+    const arrow = this.shadowRoot.querySelector('.arrow');
+    if (name === 'open') {
+      const isOpen = newVal !== null;
+      this.classList.toggle('open', isOpen);
+      arrow.classList.toggle('open', isOpen);
+    }
+  }
+
 }
 customElements.define('roll-up-box', RollUpBox);
 
@@ -283,8 +301,9 @@ class LSystemEditor extends HTMLElement {
     });
   }
 
-  onEdit(callback) { this.onEditCallback = callback; }
+  setEditListener(callback) { this.onEditCallback = callback; }
 
+  // called when input changes
   onInputChange(e) {
     const key = e.target.dataset.key;
     if (!key || !this.sys) return;
@@ -714,14 +733,14 @@ editor.setParameterHints({
   axiom:       { title:"Axiom", type:"string" },
   angle:       { title:"Angle", type:"float", step:1 },
   dist:        { title:"Distance", type:"float", step:0.5 },
-  iterations:  { title:"Replace Iterations (Careful!)", type:"int", step:1 },
+  iterations:  { title:"Replace Iterations (Careful!!)", type:"int", step:1 },
   hue_step:    { title:"Hue Step", type:"float", step:1 },
   dist_step:   { title:"Distance Step", type:"float", step:0.1 },
   rules:       { title:"Replace Rules", type:"json" }
 });
 
 // anytime a field is edited by the editor...
-editor.onEdit((sys) => {
+editor.setEditListener((sys) => {
   menu.setCurrentName( sys.name ); // reflect the l-system name back to the menu
   startAnimation();
 });
