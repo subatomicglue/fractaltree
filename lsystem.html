@@ -160,7 +160,7 @@ class LSystemEditor extends HTMLElement {
           background:#666;
         }
       </style>
-      <roll-up-box>
+      <roll-up-box ${this.hasAttribute('open') ? 'open' : ''}>
         <span slot="title">L-System Editor</span>
         <div class="editor"></div>
       </roll-up-box>
@@ -347,7 +347,7 @@ class LSystemMenu extends HTMLElement {
           background: rgba(0,255,0,0.3);
         }
       </style>
-      <roll-up-box>
+      <roll-up-box ${this.hasAttribute('open') ? 'open' : ''}>
         <span slot="title">L-System Menu</span>
         <div class="menu"></div>
       </roll-up-box>
