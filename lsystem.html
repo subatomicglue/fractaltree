@@ -171,7 +171,19 @@ class LSystemEditor extends HTMLElement {
           line-height:22px;
           text-align:center;
           cursor:pointer;
-          user-select:none;
+
+          user-select: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+
+          /* prevent accidental drag selection */
+          -webkit-touch-callout: none;
+          -webkit-user-drag: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+
           background: #444;
           color: #eee;
           border-radius:2px;
@@ -230,67 +242,19 @@ class LSystemEditor extends HTMLElement {
     this.editorDiv.innerHTML = '';
     this.inputs = {};
 
+    const handledKeys = new Set();
+
+    // 1️⃣ Add fields in the order of the hints
+    for (const key of Object.keys(this.paramHints)) {
+      if (!(key in sys)) continue;  // skip hint keys not in this sys
+      handledKeys.add(key);
+      this._createInputField(key, sys[key], this.paramHints[key]);
+    }
+
+    // 2️⃣ Add any remaining keys not mentioned in hints
     for (const key of Object.keys(sys)) {
-      const val = sys[key];
-      const hint = this.paramHints[key] || {};
-      const label = document.createElement('label');
-      label.textContent = hint.title || key;
-
-      let input;
-      let errorSpan;
-      const type = hint.type || typeof val;
-
-      if (type === 'number' || type === 'int' || type === 'float') {
-        // Wrap input with spinner buttons
-        const wrapper = document.createElement('div');
-        wrapper.className = 'number-wrapper';
-
-        input = document.createElement('input');
-        input.type = 'number';
-        input.step = hint.step ?? (type==='int'?1:0.1);
-        input.value = val;
-
-        const btnDown = document.createElement('div');
-        btnDown.className = 'spinner-btn';
-        btnDown.textContent = '−';
-        const btnUp = document.createElement('div');
-        btnUp.className = 'spinner-btn';
-        btnUp.textContent = '+';
-        const stepValue = parseFloat(input.step || "1") || 1;
-        this.makeAutoRepeatButton(btnUp, input, stepValue);
-        this.makeAutoRepeatButton(btnDown, input, -stepValue);
-
-        wrapper.appendChild(input);
-        wrapper.appendChild(btnDown);
-        wrapper.appendChild(btnUp);
-        label.appendChild(wrapper);
-      } else if (type === 'boolean') {
-        input = document.createElement('input');
-        input.type = 'checkbox';
-        input.checked = val;
-        label.appendChild(input);
-      } else if (type==='json' || type==='object') {
-        input = document.createElement('textarea');
-        input.rows = 4;
-        input.value = JSON.stringify(val, null, 2);
-        errorSpan = document.createElement('span');
-        errorSpan.className = 'error-text';
-        errorSpan.textContent = '(error)';
-        label.appendChild(errorSpan);
-        input.errorSpan = errorSpan;
-        label.appendChild(input);
-      } else { // string
-        input = document.createElement('input');
-        input.type = 'text';
-        input.value = val;
-        label.appendChild(input);
-      }
-
-      input.dataset.key = key;
-      input.addEventListener('input', this.onInputChange);
-
-      this.editorDiv.appendChild(label);
-      this.inputs[key] = input;
+      if (handledKeys.has(key)) continue;
+      this._createInputField(key, sys[key], {});
     }
 
     // Stop propagation for all inputs
@@ -300,6 +264,68 @@ class LSystemEditor extends HTMLElement {
       );
     });
   }
+
+  // Helper to reduce code duplication
+  _createInputField(key, val, hint={}) {
+    const label = document.createElement('label');
+    label.textContent = hint.title || key;
+
+    let input;
+    let errorSpan;
+    const type = hint.type || typeof val;
+
+    if (type === 'number' || type === 'int' || type === 'float') {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'number-wrapper';
+
+      input = document.createElement('input');
+      input.type = 'number';
+      input.step = hint.step ?? (type==='int'?1:0.1);
+      input.value = val;
+
+      const btnDown = document.createElement('div');
+      btnDown.className = 'spinner-btn';
+      btnDown.textContent = '−';
+      const btnUp = document.createElement('div');
+      btnUp.className = 'spinner-btn';
+      btnUp.textContent = '+';
+      const stepValue = parseFloat(input.step || "1") || 1;
+      this.makeAutoRepeatButton(btnUp, input, stepValue);
+      this.makeAutoRepeatButton(btnDown, input, -stepValue);
+
+      wrapper.appendChild(input);
+      wrapper.appendChild(btnDown);
+      wrapper.appendChild(btnUp);
+      label.appendChild(wrapper);
+    } else if (type === 'boolean') {
+      input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = val;
+      label.appendChild(input);
+    } else if (type==='json' || type==='object') {
+      input = document.createElement('textarea');
+      input.rows = 4;
+      input.value = JSON.stringify(val, null, 2);
+      errorSpan = document.createElement('span');
+      errorSpan.className = 'error-text';
+      errorSpan.textContent = '(error)';
+      label.appendChild(errorSpan);
+      input.errorSpan = errorSpan;
+      label.appendChild(input);
+    } else { // string
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = val;
+      label.appendChild(input);
+    }
+
+    input.dataset.key = key;
+    input.addEventListener('input', this.onInputChange);
+
+    this.editorDiv.appendChild(label);
+    this.inputs[key] = input;
+  }
+
 
   setEditListener(callback) { this.onEditCallback = callback; }
 
@@ -730,13 +756,14 @@ menu.onSelectCallback((i) => {
 
 // editor hints 
 editor.setParameterHints({
+  name:        { title:"Name", type:"string" },
   axiom:       { title:"Axiom", type:"string" },
   angle:       { title:"Angle", type:"float", step:1 },
   dist:        { title:"Distance", type:"float", step:0.5 },
-  iterations:  { title:"Replace Iterations (Careful!!)", type:"int", step:1 },
   hue_step:    { title:"Hue Step", type:"float", step:1 },
   dist_step:   { title:"Distance Step", type:"float", step:0.1 },
-  rules:       { title:"Replace Rules", type:"json" }
+  rules:       { title:"Replace Rules", type:"json" },
+  iterations:  { title:"Replace Iterations (Careful!!)", type:"int", step:1 },
 });
 
 // anytime a field is edited by the editor...
