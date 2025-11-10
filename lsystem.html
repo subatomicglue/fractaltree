@@ -160,7 +160,7 @@ class LSystemEditor extends HTMLElement {
           background:#666;
         }
       </style>
-      <roll-up-box ${this.hasAttribute('open') ? 'open' : ''}>
+      <roll-up-box>
         <span slot="title">L-System Editor</span>
         <div class="editor"></div>
       </roll-up-box>
@@ -170,6 +170,11 @@ class LSystemEditor extends HTMLElement {
     this.onEditCallback = null;
     this.paramHints = {};
     this.onInputChange = this.onInputChange.bind(this);
+  }
+  
+  connectedCallback() {
+    const rollup = this.shadowRoot.querySelector('roll-up-box');
+    if (this.hasAttribute('open')) rollup.setAttribute('open', '');
   }
 
   setParameterHints(hints) {
@@ -347,7 +352,7 @@ class LSystemMenu extends HTMLElement {
           background: rgba(0,255,0,0.3);
         }
       </style>
-      <roll-up-box ${this.hasAttribute('open') ? 'open' : ''}>
+      <roll-up-box>
         <span slot="title">L-System Menu</span>
         <div class="menu"></div>
       </roll-up-box>
@@ -355,6 +360,9 @@ class LSystemMenu extends HTMLElement {
   }
 
   connectedCallback() {
+    const rollup = this.shadowRoot.querySelector('roll-up-box');
+    if (this.hasAttribute('open')) rollup.setAttribute('open', '');
+  
     this.menuDiv = this.shadowRoot.querySelector('.menu');
     if (this.systems) this.populate(this.systems);
   }
