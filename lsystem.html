@@ -83,26 +83,31 @@ class RollUpBox extends HTMLElement {
     `;
   }
   
+  static get observedAttributes() { return ['open']; }
+
   connectedCallback() {
     const title = this.shadowRoot.querySelector('.title');
     const arrow = this.shadowRoot.querySelector('.arrow');
-  
-    // If <roll-up-box open> is present, open by default
-    if (this.hasAttribute('open')) {
-      this.classList.add('open');
-      arrow.classList.add('open');
-    }
-  
+
     title.addEventListener('click', () => {
-      this.classList.toggle('open');
-      arrow.classList.toggle('open');
+      this.toggleAttribute('open');
     });
+
+    // initialize
     this.updateOpenState();
   }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (name === 'open') this.updateOpenState();
+  }
+
   updateOpenState() {
-    const content = this.shadowRoot.querySelector('.content');
-    const isOpen = this.hasAttribute('open');
-    content.style.display = isOpen ? 'block' : 'none';
+    const arrow = this.shadowRoot.querySelector('.arrow');
+    if (this.hasAttribute('open')) {
+      arrow.classList.add('open');
+    } else {
+      arrow.classList.remove('open');
+    }
   }
 }
 customElements.define('roll-up-box', RollUpBox);
