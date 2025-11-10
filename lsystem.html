@@ -159,6 +159,9 @@ class LSystemEditor extends HTMLElement {
         .spinner-btn:hover {
           background:#666;
         }
+        input[type=number] {
+          font-size: 16px; /* iOS Safari disables zoom if font ≥ 16px */
+        }
       </style>
       <roll-up-box>
         <span slot="title">L-System Editor</span>
